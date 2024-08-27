@@ -1,95 +1,96 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+
+import { Box, Stack, TextField, Button, Typography } from "@mui/material"
+import { useState } from "react";
 
 export default function Home() {
+  const [history, setHistory] = useState([])
+  const firstMessage = "Hi there! I'm the Headstarter virtual assistant. How can I help?"
+  
+  const [message, setMessage] = useState("")
+
+  const sendMessage = async () => {
+    setHistory((history) => [ ...history, {role: "user", parts: [{text: message}]} ])
+    setMessage('')
+
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify([ ...history, {role: "user", parts: [{text: message}]} ])
+    })
+
+    const data = await response.json()
+
+    setHistory((history) => [ ...history, {role: "model", parts: [{text: data}] }])
+  }
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Box
+      width={'100vw'}
+      height={'100vh'}
+      display={'flex'}
+      flexDirection="column"
+      alignItems={'center'}
+      justifyContent={'center'}
+    >
+      <Stack 
+        direction={'column'} 
+        justifyContent={'flex-start'}
+        width='500px'
+        height="700px"
+        border="1px solid black"
+        p={2}
+        spacing={3}
+      >
+        <Stack direction={'column'} spacing={2} overflow={'auto'} flexGrow={1} maxHeight="100%">
+          <Box
+            display={'flex'}
+            justifyContent={
+              message.role === 'assistant' ? 'flex-start' : 'flex-end'
+            }
+            bgcolor={
+              message.role === 'assistant'
+                ? 'primary.main'
+                : 'secondary.main'
+            }
+            borderRadius={10}
+            p={2}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            <Typography
+              bgcolor={'secondary.main'}
+              color={'white'}
+            >
+              {firstMessage}
+            </Typography>
+          </Box>
+          {history.map((textObject, index) => (
+              <Box
+              key={index}
+              display="flex"
+              justifyContent={
+                textObject.role === 'user' ? 'flex-end' : 'flex-start'
+              }
+            >
+              <Box
+                bgcolor={
+                  textObject.role === 'user'
+                    ? 'primary.main'
+                    : 'secondary.main'
+                }
+                color="white"
+                borderRadius={16}
+                p={3}
+              >
+                {textObject.parts[0].text}
+                
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+        <Stack direction={'row'} spacing={2} width={'80%'} display={'flex'} alignItems={'center'} justifyContent={'center'}>
+          <TextField label='Message' value={message} onChange={(e => setMessage(e.target.value))} fullWidth></TextField>
+          <Button variant='contained' onClick={sendMessage}>Send</Button>
+        </Stack>
+      </Stack>
+    </Box>
   );
 }
